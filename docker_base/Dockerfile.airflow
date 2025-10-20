@@ -1,0 +1,14 @@
+# Use Airflow base image matching your runtime
+FROM apache/airflow:2.8.1
+
+# Copy requirements and install plugin & deps
+COPY requirements-clickhouse.txt /tmp/requirements-clickhouse.txt
+
+# Switch to airflow user
+USER airflow
+
+RUN pip install --upgrade pip \
+ && pip install -r /tmp/requirements-clickhouse.txt
+
+# ensure airflow user owns plugins/dags/logs folder defaults
+RUN mkdir -p /opt/airflow && chown -R 50000:50000 /opt/airflow || true
