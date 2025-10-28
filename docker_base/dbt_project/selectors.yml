@@ -1,0 +1,7 @@
+selectors:
+  - name: all_models
+    description: "Run all models in models folders using FQN"
+    definition:
+      union:
+        - method: fqn
+          value: messud

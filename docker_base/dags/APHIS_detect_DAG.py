@@ -153,7 +153,7 @@ def create_table_from_csv(**context):
     columns_ddl_str = ',\n      '.join(columns_ddl)
     
     create_sql = f"""
-    CREATE TABLE IF NOT EXISTS {table_name} (
+    CREATE TABLE IF NOT EXISTS  messud.{table_name} (
       {columns_ddl_str}
     ) ENGINE = MergeTree()
     ORDER BY tuple();
@@ -203,7 +203,7 @@ with DAG(
     # Templated SQL for loading: use ClickHouse file() table function to ingest the CSV.
     # We use ti.xcom_pull to get the filename and the created table name.
     load_sql = """
-    INSERT INTO {{ ti.xcom_pull(task_ids='create_table_from_csv', key='created_table') }}
+    INSERT INTO messud.aphis
     SELECT
       *
     FROM file('/var/lib/clickhouse/user_files/{{ ti.xcom_pull(task_ids='create_table_from_csv', key='file_basename') }}', 'CSVWithNames')

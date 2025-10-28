@@ -31,6 +31,7 @@ services:
     environment:
       CLICKHOUSE_USER: default
       CLICKHOUSE_PASSWORD: "12345678"
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
     ulimits:
       nofile:
         soft: 262144
@@ -40,6 +41,21 @@ services:
       interval: 10s
       retries: 10
     restart: always
+
+  dbt-project:
+    # dbt container for building and testing ClickHouse models
+    build:
+      context: .               # Build context is the current directory
+      dockerfile: Dockerfile.dbt   # Use the Dockerfile in this directory to build dbt image
+    container_name: dbt-project
+    depends_on:
+      - clickhouse-server-project      # Ensure ClickHouse starts before dbt
+    volumes:
+      - ./sample_data:/var/lib/clickhouse/user_files # Shared folder for input files
+      - ./sql:/sql                                  # Shared SQL scripts
+      - ./dbt_project:/dbt                                  # Mount local dbt project directory
+    working_dir: /dbt          # Set dbt project directory as the working directory
+    tty: true                  # Keep container running for interactive dbt commands
 
   # --- Airflow builder/init (builds custom image with plugin) ---
   airflow-init-project:

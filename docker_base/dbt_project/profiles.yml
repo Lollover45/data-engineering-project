@@ -1,0 +1,11 @@
+clickhouse_dbt_project:     # must match "profile" in dbt_project.yml
+  target: dev
+  outputs:
+    dev:
+      type: clickhouse
+      schema: messud
+      host: clickhouse-server-project
+      port: 8123
+      user: default
+      password: "12345678"
+      secure: false
