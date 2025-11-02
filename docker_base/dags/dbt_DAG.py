@@ -51,4 +51,9 @@ with DAG(
         bash_command="cd /dbt && dbt run --select fact_observations"
     )
     
-dbt_stg_gbif >> dbt_stg_aphis >> dbt_dim_date >> dbt_dim_location >> dbt_dim_organism >> dbt_fact_observations
+    dbt_test = BashOperator(
+        task_id = "dbt_test",
+        bash_command = "cd /dbt && dbt test"
+    )
+    
+dbt_stg_gbif >> dbt_stg_aphis >> dbt_dim_date >> dbt_dim_location >> dbt_dim_organism >> dbt_fact_observations >> dbt_test

@@ -51,43 +51,39 @@ def find_and_push_file(ti):
 # Load valid rows into ClickHouse (tab-delimited with headers)
 load_sql = """
     INSERT INTO messud.gbif
-    SELECT f.*
-    FROM
-    (
-        SELECT
-            toUInt64(gbifID) AS gbifID, 
-            eventDate AS eventDate,
-            toUInt16(year) AS year,
-            toUInt8(month) AS month,
-            toUInt8(day) AS day,
-            toUInt64(individualCount) AS individualCount,
-            continent,
-            countryCode,
-            stateProvince,
-            county AS county,
-            toFloat64(decimalLatitude) AS decimalLatitude,
-            toFloat64(decimalLongitude) AS decimalLongitude,
-            scientificName AS scientificName,
-            species AS species
-        FROM file(
-            '/var/lib/clickhouse/user_files/gbif/{{ ti.xcom_pull(task_ids='find_and_push_file', key='matched_file_basename') }}',
-            'TSVWithNames'
-        )
-        WHERE
-            year IS NOT NULL
-            AND month IS NOT NULL
-            AND toInt64(individualCount) > 0
-            AND countryCode = 'US'
-            AND county IS NOT NULL
-            AND decimalLatitude IS NOT NULL
-            AND toFloat64(decimalLatitude) BETWEEN -90 AND 90
-            AND decimalLongitude IS NOT NULL
-            AND toFloat64(decimalLongitude) BETWEEN -180 AND 180
-            AND species = 'Apis mellifera'
-    ) AS f
-    LEFT JOIN messud.gbif AS t
-        ON f.gbifID = t.gbifID
-    WHERE t.gbifID IS NULL OR NOT exists (SELECT 1 FROM messud.gbif LIMIT 1);
+      (gbifID, eventDate, year, month, day, individualCount,
+       continent, countryCode, stateProvince, county,
+       decimalLatitude, decimalLongitude, scientificName, species)
+    SELECT DISTINCT
+      toUInt64(gbifID) AS gbifID, 
+      eventDate AS eventDate,
+      toUInt16(year) AS year,
+      toUInt8(month) AS month,
+      toUInt8(day) AS day,
+      toUInt64(individualCount) AS individualCount,
+      continent,
+      countryCode,
+      stateProvince,
+      county AS county,
+      toFloat64(decimalLatitude) AS decimalLatitude,
+      toFloat64(decimalLongitude) AS decimalLongitude,
+      scientificName AS scientificName,
+      species AS species
+    FROM file('/var/lib/clickhouse/user_files/gbif/{{ ti.xcom_pull(task_ids='find_and_push_file', key='matched_file_basename') }}', 'TSVWithNames')
+    WHERE
+      year IS NOT NULL
+      AND month IS NOT NULL
+      AND toInt64(individualCount) > 0
+      AND countryCode = 'US'
+      AND county IS NOT NULL
+      AND decimalLatitude IS NOT NULL
+      AND toFloat64(decimalLatitude) > -91
+      AND toFloat64(decimalLatitude) < 91
+      AND decimalLongitude IS NOT NULL
+      AND toFloat64(decimalLongitude) > -181
+      AND toFloat64(decimalLongitude) < 181
+      AND species = 'Apis mellifera'  
+    ;
     """    
 
 # --- DAG definition ---

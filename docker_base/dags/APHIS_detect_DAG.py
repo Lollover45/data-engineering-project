@@ -51,56 +51,47 @@ def find_and_push_file(ti):
 # Load valid rows into ClickHouse (tab-delimited with headers)
 load_sql = """
     INSERT INTO messud.aphis
-    SELECT f.*
-    FROM
-    (
-        SELECT
-            toUInt16(sample_year) AS sample_year,
-            toUInt8(sample_month_number) AS sample_month_number,
-            sample_month,
-            state_code,
-            sampling_county,
-            toFloat32(varroa_per_100_bees) AS varroa_per_100_bees,
-            toFloat32(million_spores_per_bee) AS million_spores_per_bee,
-            abpv,
-            toFloat32OrNull(replaceRegexpAll(toString(abpv_percentile), '^<', '')) AS abpv_percentile,
-            amsv1,
-            toFloat32OrNull(replaceRegexpAll(toString(amsv1_percentile), '^<', '')) AS amsv1_percentile,
-            cbpv,
-            toFloat32OrNull(replaceRegexpAll(toString(cbpv_percentile), '^<', '')) AS cbpv_percentile,
-            dwv,
-            toFloat32OrNull(replaceRegexpAll(toString(dwv_percentile), '^<', '')) AS dwv_percentile,
-            `dwv-b` AS dwv_b,
-            toFloat32OrNull(replaceRegexpAll(toString(`dwv-b_percentile`), '^<', '')) AS dwv_b_percentile,
-            iapv,
-            toFloat32OrNull(replaceRegexpAll(toString(iapv_percentile), '^<', '')) AS iapv_percentile,
-            kbv,
-            toFloat32OrNull(replaceRegexpAll(toString(kbv_percentile), '^<', '')) AS kbv_percentile,
-            lsv2,
-            toFloat32OrNull(replaceRegexpAll(toString(lsv2_percentile), '^<', '')) AS lsv2_percentile,
-            sbpv,
-            toFloat32OrNull(replaceRegexpAll(toString(sbpv_percentile), '^<', '')) AS sbpv_percentile,
-            mkv,
-            toFloat32OrNull(replaceRegexpAll(toString(mkv_percentile), '^<', '')) AS mkv_percentile,
-            pesticides
-        FROM file(
-            '/var/lib/clickhouse/user_files/aphis/{{ ti.xcom_pull(task_ids='find_and_push_file', key='matched_file_basename') }}',
-            'CSVWithNames'
-        )
-        WHERE
-            sample_year IS NOT NULL
-            AND sample_month_number IS NOT NULL
-            AND sample_month IS NOT NULL
-            AND state_code IS NOT NULL
-            AND sampling_county IS NOT NULL
-    ) AS f
-    LEFT JOIN messud.aphis AS t
-        ON f.sample_year = t.sample_year
-    AND f.sample_month_number = t.sample_month_number
-    AND f.sample_month = t.sample_month
-    AND f.state_code = t.state_code
-    AND f.sampling_county = t.sampling_county
-    WHERE t.sample_year IS NULL OR NOT exists (SELECT 1 FROM messud.aphis LIMIT 1);
+    (sample_year, sample_month_number,sample_month,state_code,sampling_county,
+    varroa_per_100_bees,million_spores_per_bee,abpv,abpv_percentile,amsv1,amsv1_percentile,
+    cbpv,cbpv_percentile,dwv,dwv_percentile,dwv_b,dwv_b_percentile,iapv,iapv_percentile,kbv,kbv_percentile,
+    lsv2,lsv2_percentile,sbpv,sbpv_percentile,mkv,mkv_percentile,pesticides)
+    SELECT DISTINCT
+    toUInt16(sample_year) AS sample_year,
+    toUInt8(sample_month_number) AS sample_month_number,
+    sample_month,
+    state_code,
+    sampling_county,
+    toFloat32(varroa_per_100_bees) AS varroa_per_100_bees,
+    toFloat32(million_spores_per_bee) AS million_spores_per_bee,
+    abpv,
+    toFloat32OrNull(replaceRegexpAll(toString(abpv_percentile), '^<', '')) AS abpv_percentile,
+    amsv1,
+    toFloat32OrNull(replaceRegexpAll(toString(amsv1_percentile), '^<', '')) AS amsv1_percentile,
+    cbpv,
+    toFloat32OrNull(replaceRegexpAll(toString(cbpv_percentile), '^<', '')) AS cbpv_percentile,
+    dwv,
+    toFloat32OrNull(replaceRegexpAll(toString(dwv_percentile), '^<', '')) AS dwv_percentile,
+    `dwv-b` AS dwv_b,
+    toFloat32OrNull(replaceRegexpAll(toString(`dwv-b_percentile`), '^<', '')) AS dwv_b_percentile,
+    iapv,
+    toFloat32OrNull(replaceRegexpAll(toString(iapv_percentile), '^<', '')) AS iapv_percentile,
+    kbv,
+    toFloat32OrNull(replaceRegexpAll(toString(kbv_percentile), '^<', '')) AS kbv_percentile,
+    lsv2,
+    toFloat32OrNull(replaceRegexpAll(toString(lsv2_percentile), '^<', '')) AS lsv2_percentile,
+    sbpv,
+    toFloat32OrNull(replaceRegexpAll(toString(sbpv_percentile), '^<', '')) AS sbpv_percentile,
+    mkv,
+    toFloat32OrNull(replaceRegexpAll(toString(mkv_percentile), '^<', '')) AS mkv_percentile,
+    pesticides
+    FROM file('/var/lib/clickhouse/user_files/aphis/{{ ti.xcom_pull(task_ids='find_and_push_file', key='matched_file_basename') }}', 'CSVWithNames')
+    WHERE
+    sample_year IS NOT NULL
+    AND sample_month_number IS NOT NULL
+    AND sample_month IS NOT NULL
+    AND state_code IS NOT NULL
+    AND sampling_county IS NOT NULL
+    ;
     """    
 
 # --- DAG definition ---
