@@ -26,7 +26,7 @@ gbif_dates AS (
 -- Combining the APHIS and GBIF date data
 datesCombined AS (
 	SELECT FullDate, Year, Month FROM aphis_dates
-	UNION ALL
+	UNION DISTINCT
 	SELECT FullDate, Year, Month FROM gbif_dates
 )
 

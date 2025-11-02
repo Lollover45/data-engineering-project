@@ -1,4 +1,5 @@
 
+        
   
     
     
@@ -7,8 +8,10 @@
          
 
 
-        insert into `messud`.`dim_organism__dbt_backup`
-        ("OrganismKey", "Type", "Name", "ScientificName", "Unit")WITH gbif_organisms AS (
+        insert into `messud`.`dim_organism__dbt_new_data_d747faf2_ef25_44b6_b7c4_325e00818d02`
+        ("OrganismKey", "Type", "Name", "ScientificName", "Unit", "valid_from", "valid_to", "is_current")
+
+WITH gbif_organisms AS (
     SELECT
         
     CASE
@@ -60,17 +63,49 @@ END
 
 organismsCombined AS (
     SELECT Type, Name, ScientificName, Unit FROM gbif_organisms
-    UNION ALL
+    UNION DISTINCT
     SELECT Type, Name, ScientificName, Unit FROM aphis_organisms
+),
+
+current_dim AS (
+    SELECT *
+    FROM `messud`.`dim_organism`
+    WHERE is_current = 1
+),
+
+changes AS (
+    SELECT s.*
+    FROM organismsCombined s
+    LEFT JOIN current_dim d ON s.Name = d.Name
+    WHERE d.Name IS NULL
+       OR s.Unit != d.Unit
+       OR s.Type != d.Type
+       OR s.ScientificName != d.ScientificName
 )
 
+-- ✅ Final output: inserts only
 SELECT
-    lower(hex(MD5(toString(coalesce(cast(Name as String), '_dbt_utils_surrogate_key_null_') )))) AS OrganismKey,
-    Type,
-    Name,
-    ScientificName,
-    Unit
-FROM organismsCombined
+    lower(hex(MD5(toString(coalesce(cast(Name as String), '_dbt_utils_surrogate_key_null_') || '-' || coalesce(cast(now() as String), '_dbt_utils_surrogate_key_null_') )))) AS OrganismKey,
+    s.Type, s.Name, s.ScientificName, s.Unit,
+    now() AS valid_from,
+    NULL AS valid_to,
+    1 AS is_current
+FROM organismsCombined s
+WHERE s.Name IN (SELECT Name FROM changes)
 
-ORDER BY Type, Name, ScientificName
+
+UNION ALL
+
+-- expire existing changed
+SELECT
+    d.OrganismKey,
+    d.Type, d.Name, d.ScientificName, d.Unit,
+    d.valid_from,
+    now() AS valid_to,
+    0 AS is_current
+FROM `messud`.`dim_organism` d
+WHERE d.Name IN (SELECT Name FROM changes)
+  AND d.is_current = 1
+
   
+      

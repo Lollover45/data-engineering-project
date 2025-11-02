@@ -12,11 +12,13 @@ SELECT
 FROM {{ ref('stg_gbif')}} AS gbif
 LEFT JOIN {{ ref('dim_organism') }} AS o
 	ON gbif.scientificName = o.ScientificName
+	AND o.is_current = 1
 LEFT JOIN {{ ref('dim_location') }} AS l
-	ON gbif.county = l.County
+	ON gbif.decimalLatitude = l.Latitude
+	AND gbif.decimalLongitude = l.Longitude
 LEFT JOIN {{ ref('dim_date') }} AS d
 	ON toDate(parseDateTimeBestEffort(splitByChar('/', gbif.eventDate)[1])) = d.FullDate
-UNION ALL
+UNION DISTINCT
 
 -- Selecting the APHIS data using the established model.
 
@@ -28,6 +30,7 @@ SELECT
 FROM {{ ref('stg_aphis_long') }} AS aphis
 LEFT JOIN {{ ref('dim_organism') }} AS o
 	ON aphis.pest_name = o.Name
+	AND o.is_current = 1
 LEFT JOIN {{ ref('dim_location') }} AS l
 	ON aphis.sampling_county = l.County
 LEFT JOIN {{ ref('dim_date') }} AS d

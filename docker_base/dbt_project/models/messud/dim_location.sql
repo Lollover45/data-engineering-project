@@ -42,7 +42,7 @@ gbif_locations AS (
 -- Combining the two datasets together.
 locationsCombined AS (
 	SELECT Continent, Country, State, County, NULL AS Latitude, NULL AS Longitude FROM aphis_locations
-	UNION
+	UNION DISTINCT
 	SELECT Continent, Country, State, County, Latitude, Longitude from gbif_locations
 )
 

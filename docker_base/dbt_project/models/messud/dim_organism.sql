@@ -1,3 +1,9 @@
+{{ config(
+    materialized='incremental',
+    unique_key='Name',
+    incremental_strategy='delete+insert'
+) }}
+
 WITH gbif_organisms AS (
     SELECT
         {{ get_organism_type("species") }} AS Type,
@@ -18,16 +24,47 @@ aphis_organisms AS (
 
 organismsCombined AS (
     SELECT Type, Name, ScientificName, Unit FROM gbif_organisms
-    UNION ALL
+    UNION DISTINCT
     SELECT Type, Name, ScientificName, Unit FROM aphis_organisms
+),
+
+current_dim AS (
+    SELECT *
+    FROM {{ this }}
+    WHERE is_current = 1
+),
+
+changes AS (
+    SELECT s.*
+    FROM organismsCombined s
+    LEFT JOIN current_dim d ON s.Name = d.Name
+    WHERE d.Name IS NULL
+       OR s.Unit != d.Unit
+       OR s.Type != d.Type
+       OR s.ScientificName != d.ScientificName
 )
 
+-- ✅ Final output: inserts only
 SELECT
-    {{dbt_utils.generate_surrogate_key(['Name']) }} AS OrganismKey,
-    Type,
-    Name,
-    ScientificName,
-    Unit
-FROM organismsCombined
+    {{ dbt_utils.generate_surrogate_key(['Name', 'now()']) }} AS OrganismKey,
+    s.Type, s.Name, s.ScientificName, s.Unit,
+    now() AS valid_from,
+    NULL AS valid_to,
+    1 AS is_current
+FROM organismsCombined s
+WHERE s.Name IN (SELECT Name FROM changes)
 
-ORDER BY Type, Name, ScientificName
+{% if is_incremental() %}
+UNION ALL
+
+-- expire existing changed
+SELECT
+    d.OrganismKey,
+    d.Type, d.Name, d.ScientificName, d.Unit,
+    d.valid_from,
+    now() AS valid_to,
+    0 AS is_current
+FROM {{ this }} d
+WHERE d.Name IN (SELECT Name FROM changes)
+  AND d.is_current = 1
+{% endif %}

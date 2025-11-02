@@ -5,6 +5,7 @@ CREATE DATABASE messud;
 -- base tables
 
 CREATE table messud.gbif(
+    gbifID UInt64,
     eventDate String,
     year UInt16,
     month UInt8,
@@ -66,3 +67,18 @@ CREATE TABLE messud.aphis(
 )
 ENGINE = MergeTree
 ORDER BY (sample_year, state_code, sampling_county);
+
+CREATE TABLE messud.dim_organism (
+    OrganismKey String,
+    Type String,
+    Name String,
+    ScientificName String,
+    Unit String,
+    valid_from DateTime,
+    valid_to Nullable(DateTime),
+    is_current UInt8
+)
+ENGINE = ReplacingMergeTree()
+ORDER BY OrganismKey;
+
+

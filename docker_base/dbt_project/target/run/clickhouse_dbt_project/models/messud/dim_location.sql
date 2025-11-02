@@ -8,13 +8,12 @@
 
 
         insert into `messud`.`dim_location__dbt_backup`
-        ("LocationKey", "Continent", "Country", "State", "County")/* Model SQL for dim.Organism.
+        ("LocationKey", "Continent", "Country", "State", "County", "Latitude", "Longitude")/* Model SQL for dim.Organism.
 Joins together data from both GBIF and Aphis datasets. 
 For GBIF, staging is not used. In the case of APHIs, the staging model stg_aphis_long, which was used to change the data into long format, will be referenced.
 
 Macro get_state_name() is used to convert state codes into full state names.
 */
-
 
 /* Selecting the APHIS data. 
 The APHIS data should currently only contain data collected from the US, thus there are no columns indicating country or continent.
@@ -215,7 +214,7 @@ gbif_locations AS (
 -- Combining the two datasets together.
 locationsCombined AS (
 	SELECT Continent, Country, State, County, NULL AS Latitude, NULL AS Longitude FROM aphis_locations
-	UNION ALL
+	UNION DISTINCT
 	SELECT Continent, Country, State, County, Latitude, Longitude from gbif_locations
 )
 
@@ -225,7 +224,9 @@ SELECT
 	Continent,
 	Country,
 	State,
-	County
+	County,
+	Latitude,
+	Longitude 
 FROM locationsCombined
 
 ORDER BY Continent, Country, State, County
