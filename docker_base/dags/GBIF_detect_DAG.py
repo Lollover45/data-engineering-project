@@ -9,17 +9,19 @@ Changes:
 - Moves processed files to a 'processed' subfolder after load.
 """
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 import os
 import shutil
 from airflow import DAG
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.sensors.filesystem import FileSensor
 from airflow.operators.python import PythonOperator
 from airflow_clickhouse_plugin.operators.clickhouse import ClickHouseOperator
+from airflow.utils.dates import days_ago
 
 # --- Move processed file to 'processed/' folder ---
 def move_processed_file(**context):
-    fname = context['ti'].xcom_pull(task_ids='wait_for_gbif_file', key='return_value')
+    fname = context['ti'].xcom_pull(task_ids='find_and_push_file', key='matched_file_basename')
     if not fname:
         raise ValueError("No filename returned from sensor")
 
@@ -28,7 +30,7 @@ def move_processed_file(**context):
     if not os.path.exists(src):
         raise FileNotFoundError(f"File not found: {src}")
 
-    processed_dir = os.path.join(shared_dir, 'processed')
+    processed_dir = os.path.join("/var/lib/clickhouse/user_files", 'processed')
     os.makedirs(processed_dir, exist_ok=True)
     dest = os.path.join(processed_dir, os.path.basename(fname))
     shutil.move(src, dest)
@@ -37,7 +39,7 @@ def move_processed_file(**context):
 def find_and_push_file(ti):
     folder = '/var/lib/clickhouse/user_files/gbif'
     # list files, ignore processed/
-    files = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f)) and f != 'processed']
+    files = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
     if not files:
         raise ValueError("No files found in folder (unexpected, sensor said there was one)")
     # pick the oldest or first (adjust as needed)
@@ -49,14 +51,18 @@ def find_and_push_file(ti):
 # Load valid rows into ClickHouse (tab-delimited with headers)
 load_sql = """
     INSERT INTO messud.gbif
-      (eventDate, year, month, day, individualCount, county,
+      (eventDate, year, month, day, individualCount,
+       continent, countryCode, stateProvince, county,
        decimalLatitude, decimalLongitude, scientificName, species)
-    SELECT
+    SELECT DISTINCT
       eventDate AS eventDate,
       toUInt16(year) AS year,
       toUInt8(month) AS month,
       toUInt8(day) AS day,
       toUInt64(individualCount) AS individualCount,
+      continent,
+      countryCode,
+      stateProvince,
       county AS county,
       toFloat64(decimalLatitude) AS decimalLatitude,
       toFloat64(decimalLongitude) AS decimalLongitude,
@@ -89,9 +95,10 @@ default_args = {
 with DAG(
     dag_id='gbif_tsv_to_messud_gbif',
     default_args=default_args,
-    start_date=datetime(2024, 1, 1),
-    schedule_interval='@once',
+    start_date=days_ago(1),
+    schedule_interval='@continuous',
     catchup=False,
+    max_active_runs=1,
     tags=['gbif', 'clickhouse', 'messud'],
 ) as dag:
 
@@ -114,12 +121,18 @@ with DAG(
     load_to_clickhouse = ClickHouseOperator(
         task_id='load_to_clickhouse',
         sql=load_sql,
-        clickhouse_conn_id='clickhouse_default',
+        clickhouse_conn_id='clickhouse_default'
     )
 
     move_file = PythonOperator(
         task_id='move_processed_file',
         python_callable=move_processed_file,
     )
+    
+    trigger_dbt = TriggerDagRunOperator(
+    task_id="trigger_dbt_models",
+    trigger_dag_id="dbt_run", 
+    wait_for_completion=True,     
+    )
 
-    wait_for_gbif_file >> find_and_push >> load_to_clickhouse >> move_file
+    wait_for_gbif_file >> find_and_push >> load_to_clickhouse >> move_file >> trigger_dbt

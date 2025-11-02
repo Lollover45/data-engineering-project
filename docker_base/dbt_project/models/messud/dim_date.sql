@@ -1,31 +1,48 @@
---makeDate() viimane argument on 1, mis on decoy paevaarv
+/* Model SQL for dim.Date.
+Joins together data from both GBIF and Aphis datasets. 
+For GBIF, staging is not used. In the case of APHIs, the staging model stg_aphis_long, which was used to change the data into long format, will be referenced.
+*/
+
+-- Selecting the APHIS data
 WITH aphis_dates AS (
 	SELECT 
-		makeDate(sample_year, sample_month_number, 1) AS fullDate, 
-		sample_year AS year, 
-		sample_month_number AS month 
-	FROM {{source('messud','APHIS_records')}}
+		makeDate(sample_year, sample_month_number, 1) AS FullDate, 
+		sample_year AS Year, 
+		sample_month_number AS Month 
+	FROM {{source('messud','aphis')}}
 	GROUP BY sample_year, sample_month_number
 ),
 
+-- Selecting the GBIF data
 gbif_dates AS (
 	SELECT 
-		toDate(parseDateTimeBestEffort(splitByChar('/', eventDate)[1])) AS fullDate, 
-		year, 
-		month
-	FROM {{source('messud','gbif')}}
-	GROUP BY year, month, fullDate
+		toDate(parseDateTimeBestEffort(splitByChar('/', eventDate)[1])) AS FullDate, 
+		year AS Year, 
+		month AS Month
+	FROM {{ref('stg_gbif')}}
+	GROUP BY year, month, FullDate
 ),
 
+-- Combining the APHIS and GBIF date data
 datesCombined AS (
-	select fullDate, year, month from aphis_dates
+	SELECT FullDate, Year, Month FROM aphis_dates
 	UNION ALL
-	select fullDate, year, month from gbif_dates
+	SELECT FullDate, Year, Month FROM gbif_dates
 )
+
+-- Extracting the required data for dim.Date
 SELECT
-	fullDate,
-	year,
-	month
+	{{ dbt_utils.generate_surrogate_key(['FullDate']) }} AS DateKey,
+	FullDate,
+	Year,
+	Month,
+	CASE -- Establishing a new variable named "Season" 
+		WHEN Month IN (12,1,2) THEN 'winter'
+		WHEN Month IN (3,4,5) THEN 'spring'
+		WHEN Month IN (6,7,8) THEN 'summer'
+		ELSE 'autumn'
+	END AS Season,
+	Year - Year % 10 AS Decade -- Establishing a new variable named "Decade"
 FROM datesCombined
 
-ORDER BY fullDate
+ORDER BY FullDate

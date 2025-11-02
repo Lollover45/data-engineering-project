@@ -1,174 +1,100 @@
 """
-DAG: Autogenerate ClickHouse table from APHIS file and load it (no copying).
-Assumptions:
-- Files are placed into host ./sample_data
-- ClickHouse container mounts ./sample_data -> /var/lib/clickhouse/user_files
-- Airflow containers also mount ./sample_data -> /var/lib/clickhouse/user_files
-- A connection clickhouse_default exists pointing to ClickHouse server (plugin).
+DAG: Import tab-delimited aphis files into messud.aphis table.
+
+Changes:
+- Uses Airflow's built-in FileSensor instead of custom regex sensor.
+- Watches the dedicated subfolder /var/lib/clickhouse/user_files/aphis
+- Loads TSV/TXT files into ClickHouse (tab-separated, header included).
+- Applies non-null and bounds checks for decimalLatitude.
+- Moves processed files to a 'processed' subfolder after load.
 """
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 import os
-import re
-import csv
-from typing import List
+import shutil
 from airflow import DAG
-from airflow.sensors.base import BaseSensorOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+from airflow.utils.dates import days_ago
+from airflow.sensors.filesystem import FileSensor
 from airflow.operators.python import PythonOperator
-from airflow.utils.decorators import apply_defaults
-
-# plugin imports
 from airflow_clickhouse_plugin.operators.clickhouse import ClickHouseOperator
-# Hook path used by the plugin; if your plugin exposes a different import adjust accordingly.
-from airflow_clickhouse_plugin.hooks.clickhouse import ClickHouseHook
 
-
-# --- Utility: infer ClickHouse column type from sample values ---
-def infer_column_type(samples: List[str]) -> str:
-    """
-    Heuristic inference:
-      - if all ints -> UInt64
-      - elif all floats -> Float64
-      - elif date-like -> DateTime
-      - else -> String
-    """
-    # remove empty strings for inference
-    vals = [v for v in samples if v is not None and v != ""]
-    if not vals:
-        return "String"
-
-    # int?
-    def is_int(s):
-        try:
-            int(s)
-            return True
-        except Exception:
-            return False
-
-    if all(is_int(v) for v in vals):
-        return "UInt64"
-
-    # float?
-    def is_float(s):
-        try:
-            float(s)
-            return True
-        except Exception:
-            return False
-
-    if all(is_float(v) for v in vals):
-        return "Float64"
-
-    # date/datetime (common formats)
-    date_patterns = [
-        r"^\d{4}-\d{2}-\d{2}$",
-        r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$",
-        r"^\d{4}/\d{2}/\d{2}$",
-        r"^\d{4}_\d{2}_\d{2}_\d{2}_\d{2}$",
-        r"^\d{8}$",  # 20251020
-    ]
-    for p in date_patterns:
-        if all(re.match(p, v) for v in vals):
-            return "DateTime"
-
-    # fallback
-    return "String"
-
-
-# --- Sensor that detects APHIS filename pattern in the shared ClickHouse user_files folder ---
-class PatternFileSensor(BaseSensorOperator):
-    @apply_defaults
-    def __init__(self, folder_path: str, filename_regex: str, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.folder_path = folder_path
-        self.filename_re = re.compile(filename_regex)
-
-    def poke(self, context):
-        self.log.info("Scanning folder: %s", self.folder_path)
-        try:
-            for fname in os.listdir(self.folder_path):
-                if self.filename_re.match(fname):
-                    full = os.path.join(self.folder_path, fname)
-                    self.log.info("Found match: %s", full)
-                    context['ti'].xcom_push(key='matched_file_basename', value=fname)
-                    return True
-        except FileNotFoundError:
-            self.log.warning("Folder not found: %s", self.folder_path)
-        return False
-
-
-# --- Create table using ClickHouseHook (inferring types from first N rows) ---
-def create_table_from_csv(**context):
-    """
-    Reads the detected CSV's header and first N rows, infers column types,
-    and issues CREATE TABLE IF NOT EXISTS <table_name> using ClickHouseHook.
-    The table name used here is `APHIS_records` (adjustable).
-    """
-    ti = context['ti']
-    fname = ti.xcom_pull(task_ids='wait_for_APHIS_file', key='matched_file_basename')
+# --- Move processed file to 'processed/' folder ---
+def move_processed_file(**context):
+    fname = context['ti'].xcom_pull(task_ids='find_and_push_file', key='matched_file_basename')
     if not fname:
-        raise ValueError("No filename found in XCom")
+        raise ValueError("No filename returned from sensor")
 
-    # file path inside the container (shared mount)
-    shared_dir = '/var/lib/clickhouse/user_files'
-    file_path = os.path.join(shared_dir, fname)
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"File {file_path} not found (ensure folder is mounted into Airflow container)")
+    shared_dir = '/var/lib/clickhouse/user_files/aphis'
+    src = os.path.join(shared_dir, os.path.basename(fname))
+    if not os.path.exists(src):
+        raise FileNotFoundError(f"File not found: {src}")
 
-    # read header + sample rows
-    with open(file_path, newline='') as f:
-        reader = csv.DictReader(f)
-        headers = reader.fieldnames
-        if not headers:
-            raise ValueError("CSV has no header; cannot infer schema")
-
-        # sample rows
-        sample_rows = []
-        max_samples = 50
-        for i, row in enumerate(reader):
-            if i >= max_samples:
-                break
-            sample_rows.append(row)
-
-    # create sample values per column
-    col_samples = {h: [] for h in headers}
-    for r in sample_rows:
-        for h in headers:
-            col_samples[h].append((r.get(h) if r.get(h) is not None else ""))
-
-    # infer types
-    columns_ddl = []
-    for h in headers:
-        samples = col_samples.get(h, [])
-        col_type = infer_column_type(samples)
-        # sanitize column names: replace spaces, keep alnum and _
-        col_name = re.sub(r'\W+', '_', h).strip('_')
-        columns_ddl.append(f"`{col_name}` {col_type}")
-
-    # add metadata column for origin file timestamp (optional)
-    columns_ddl.append("`file_name` String")
-
-    table_name = "APHIS_records"
+    processed_dir = os.path.join("/var/lib/clickhouse/user_files", 'processed')
+    os.makedirs(processed_dir, exist_ok=True)
+    dest = os.path.join(processed_dir, os.path.basename(fname))
+    shutil.move(src, dest)
+    print(f"Moved processed file to {dest}")
     
-    columns_ddl_str = ',\n      '.join(columns_ddl)
+def find_and_push_file(ti):
+    folder = '/var/lib/clickhouse/user_files/aphis'
+    # list files, ignore processed/
+    files = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
+    if not files:
+        raise ValueError("No files found in folder (unexpected, sensor said there was one)")
+    # pick the oldest or first (adjust as needed)
+    files.sort()
+    chosen = files[0]
+    ti.xcom_push(key='matched_file_basename', value=chosen)
+    print("Pushed matched_file_basename:", chosen)
     
-    create_sql = f"""
-    CREATE TABLE IF NOT EXISTS  messud.{table_name} (
-      {columns_ddl_str}
-    ) ENGINE = MergeTree()
-    ORDER BY tuple();
-    """
+# Load valid rows into ClickHouse (tab-delimited with headers)
+load_sql = """
+    INSERT INTO messud.aphis
+    (sample_year, sample_month_number,sample_month,state_code,sampling_county,
+    varroa_per_100_bees,million_spores_per_bee,abpv,abpv_percentile,amsv1,amsv1_percentile,
+    cbpv,cbpv_percentile,dwv,dwv_percentile,dwv_b,dwv_b_percentile,iapv,iapv_percentile,kbv,kbv_percentile,
+    lsv2,lsv2_percentile,sbpv,sbpv_percentile,mkv,mkv_percentile,pesticides)
+    SELECT DISTINCT
+    sample_year,
+    sample_month_number,
+    sample_month,
+    state_code,
+    sampling_county,
+    varroa_per_100_bees,
+    million_spores_per_bee,
+    abpv,
+    toFloat32OrNull(replaceRegexpAll(abpv_percentile, '^<', '')) AS abpv_percentile,
+    amsv1,
+    toFloat32OrNull(replaceRegexpAll(amsv1_percentile, '^<', '')) AS amsv1_percentile,
+    cbpv,
+    toFloat32OrNull(replaceRegexpAll(cbpv_percentile, '^<', '')) AS cbpv_percentile,
+    dwv,
+    toFloat32OrNull(replaceRegexpAll(dwv_percentile, '^<', '')) AS dwv_percentile,
+    `dwv-b` AS dwv_b,
+    toFloat32OrNull(replaceRegexpAll(`dwv-b_percentile`, '^<', '')) AS dwv_b_percentile,
+    iapv,
+    toFloat32OrNull(replaceRegexpAll(iapv_percentile, '^<', '')) AS iapv_percentile,
+    kbv,
+    toFloat32OrNull(replaceRegexpAll(kbv_percentile, '^<', '')) AS kbv_percentile,
+    lsv2,
+    toFloat32OrNull(replaceRegexpAll(lsv2_percentile, '^<', '')) AS lsv2_percentile,
+    sbpv,
+    toFloat32OrNull(replaceRegexpAll(sbpv_percentile, '^<', '')) AS sbpv_percentile,
+    mkv,
+    toFloat32OrNull(replaceRegexpAll(mkv_percentile, '^<', '')) AS mkv_percentile,
+    pesticides
+    FROM file('/var/lib/clickhouse/user_files/aphis/{{ ti.xcom_pull(task_ids='find_and_push_file', key='matched_file_basename') }}', 'CSVWithNames')
+    WHERE
+    sample_year IS NOT NULL
+    AND sample_month_number IS NOT NULL
+    AND sample_month IS NOT NULL
+    AND state_code IS NOT NULL
+    AND sampling_county IS NOT NULL
+    ;
+    """    
 
-    # Use plugin Hook to execute DDL
-    self_hook = ClickHouseHook(clickhouse_conn_id='clickhouse_default')
-    self_hook.execute(create_sql)
-    # push the table name for downstream tasks
-    ti.xcom_push(key='created_table', value=table_name)
-    ti.xcom_push(key='file_basename', value=fname)
-    print(f"Created/verified table {table_name} with columns: {columns_ddl}")
-
-
-# --- DAG wiring ---
+# --- DAG definition ---
 default_args = {
     'owner': 'airflow',
     'retries': 1,
@@ -176,43 +102,46 @@ default_args = {
 }
 
 with DAG(
-    dag_id='APHIS_autoschema_clickhouse_load',
+    dag_id='aphis_csv_to_messud_aphis',
     default_args=default_args,
-    start_date=datetime(2024, 1, 1),
-    schedule_interval='@once',
+    start_date=days_ago(1),
+    schedule_interval='@continuous',
     catchup=False,
     max_active_runs=1,
-    tags=['APHIS', 'clickhouse', 'autoschema'],
+    tags=['aphis', 'clickhouse', 'messud'],
 ) as dag:
 
-    wait_for_APHIS_file = PatternFileSensor(
-        task_id='wait_for_APHIS_file',
-        folder_path='/var/lib/clickhouse/user_files',  # watch the shared folder directly
-        filename_regex=r"^APHIS_\d{4}_\d{2}_\d{2}_\d{2}_\d{2}(?:\.csv)?$",
+    # Detect any file in the aphis input folder (can be .txt or .tsv)
+    wait_for_aphis_file = FileSensor(
+        task_id='wait_for_aphis_file',
+        fs_conn_id='fs_default',  # define in Airflow Connections → type "File (path)"
+        filepath='/var/lib/clickhouse/user_files/aphis',  # the shared folder mounted in all containers
         poke_interval=20,
         timeout=3600,
-        mode='reschedule',  # avoid tying up a worker
+        mode='reschedule',
+        recursive=True,  # scan for new files inside this folder
     )
-
-    create_table = PythonOperator(
-        task_id='create_table_from_csv',
-        python_callable=create_table_from_csv,
-        provide_context=True,
+    
+    find_and_push = PythonOperator(
+    task_id='find_and_push_file',
+    python_callable=find_and_push_file,
     )
-
-    # Templated SQL for loading: use ClickHouse file() table function to ingest the CSV.
-    # We use ti.xcom_pull to get the filename and the created table name.
-    load_sql = """
-    INSERT INTO messud.aphis
-    SELECT
-      *
-    FROM file('/var/lib/clickhouse/user_files/{{ ti.xcom_pull(task_ids='create_table_from_csv', key='file_basename') }}', 'CSVWithNames')
-    """
 
     load_to_clickhouse = ClickHouseOperator(
         task_id='load_to_clickhouse',
         sql=load_sql,
-        clickhouse_conn_id='clickhouse_default',
+        clickhouse_conn_id='clickhouse_default'
     )
 
-    wait_for_APHIS_file >> create_table >> load_to_clickhouse
+    move_file = PythonOperator(
+        task_id='move_processed_file',
+        python_callable=move_processed_file,
+    )
+    
+    trigger_dbt = TriggerDagRunOperator(
+    task_id="trigger_dbt_models",
+    trigger_dag_id="dbt_run", 
+    wait_for_completion=True,     
+    )
+
+    wait_for_aphis_file >> find_and_push >> load_to_clickhouse >> move_file >> trigger_dbt

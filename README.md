@@ -6,3 +6,7 @@
 * Annaliisa Vask
 * Selene Margaret Pruuden
 * Victoria Prins
+
+
+## Running the project
+docker exec -it clickhouse-server-project clickhouse-client --multiquery --queries-file=/sql/create_db_and_tables.sql

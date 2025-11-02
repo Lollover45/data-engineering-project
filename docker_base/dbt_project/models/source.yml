@@ -4,4 +4,4 @@ sources:
   - name: messud
     tables:
       - name: gbif
-      - name: APHIS_records
+      - name: aphis

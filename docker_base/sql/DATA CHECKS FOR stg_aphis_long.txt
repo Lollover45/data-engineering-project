@@ -1,0 +1,26 @@
+DATA CHECKS FOR stg_aphis_long
+
+1. No missing values
+SELECT COUNT(*) AS missing_values
+FROM stg_aphis_long
+WHERE sample_year IS NULL
+   OR sample_month_number IS NULL
+   OR sampling_county IS NULL
+   OR pest_name IS NULL
+   OR value IS NULL;
+
+2. Realistic month number
+SELECT COUNT(*) AS not_months
+FROM stg_aphis_long
+WHERE sample_month_number NOT BETWEEN 1 AND 12;
+
+3. Negative values
+SELECT COUNT(*) AS negative_values
+FROM stg_aphis_long
+WHERE value < 0;
+
+4. Unique occurrences
+SELECT sample_year, sample_month_number, sampling_county, pest_name, COUNT(*) AS occurrences
+FROM stg_aphis_long
+GROUP BY sample_year, sample_month_number, sampling_county, pest_name
+HAVING COUNT(*) > 1;

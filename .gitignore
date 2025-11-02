@@ -3,3 +3,5 @@ logs/
 gbif/
 aphis/
 06_dbt/
+dbt_packages/
+processed/
