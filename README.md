@@ -52,6 +52,7 @@ dbt deps
 
 
 ## Results for analytical queries
+The queries can be found in docker_base/sql/demo_queries.sql
 1. From the three  counties with the highest average virus prevalence - how many bees were detected during the year 2024?
  ![top virus](visuals/top3_virus.png)
 2. How many bee occurrences are there in the five counties with the fewest Varroa mites?
