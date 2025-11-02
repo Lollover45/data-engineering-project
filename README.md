@@ -1,4 +1,4 @@
-# The repository for data engineering project for group 7 on the topic of Health of bee populations in US countys.
+# The repository for the data engineering project for group 7 on the topic of the health of bee populations in US counties.
 
 
 ## Team members
@@ -37,6 +37,8 @@ dbt deps
 
 6. Move the APHIS and GBIF files into their respective folders and everything should work.
 
+7. The password for clickhouse webUI is 12345678.
+
 
 ## Visuals from Airflow
 ### The DAGs used in the project
@@ -49,8 +51,21 @@ dbt deps
 ![dbt DAG](visuals/airflow_dbt_dag.png)
 
 
+## Results for analytical queries
+1. From the three  counties with the highest average virus prevalence - how many bees were detected during the year 2024?
+ ![top virus](visuals/top3_virus.png)
+2. How many bee occurrences are there in the five counties with the fewest Varroa mites?
+ ![varroa min](visuals/top5_min_varroa.png)
+3. How many bee occurrences are there in the five counties with the most Varroa mites?
+ ![varroa max](visuals/top5_max_varroa.png)
+4. How many bee occurrences are there in the five counties with the least Nosema fungus?
+ ![nosema min](visuals/top5_min_nosema.png)
+5. How many bee occurrences are there in the five counties with the most Nosema fungus?
+ ![nosema max](visuals/top5_max_nosema.png)
+6. Which county is most popular for beekeeping and which is most safe from pests?
+ ![pest score](visuals/pest_score.png)
 ## Known issues
 
-### Duplicate insegtion
+### Duplicate ingestion
 Sadly we couldn't get non duplicate ingestion working properly. Found a [webpage](https://cc.davelozinski.com/sql/fastest-way-to-insert-new-records-where-one-doesnt-already-exist)
-that outlined 4 methods to achieve it and tried all of them excpet merge. They either didn't work on first ingestion or didn't work after the first ingestion. Either still adding everything or adding nothing.
+that outlined 4 methods to achieve it and tried all of them except MERGE. They either didn't work on the first ingestion or didn't work after the first ingestion — either still adding everything or adding nothing.
