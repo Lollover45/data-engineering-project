@@ -48,7 +48,7 @@ def find_and_push_file(ti):
     ti.xcom_push(key='matched_file_basename', value=chosen)
     print("Pushed matched_file_basename:", chosen)
     
-# Load valid rows into ClickHouse (tab-delimited with headers)
+# Load valid rows into ClickHouse
 load_sql = """
     INSERT INTO messud.aphis
     (sample_year, sample_month_number,sample_month,state_code,sampling_county,
@@ -102,7 +102,7 @@ default_args = {
 }
 
 with DAG(
-    dag_id='aphis_csv_to_messud_aphis',
+    dag_id='aphis_csv_to_messud',
     default_args=default_args,
     start_date=days_ago(1),
     schedule_interval='@continuous',
@@ -123,8 +123,8 @@ with DAG(
     )
     
     find_and_push = PythonOperator(
-    task_id='find_and_push_file',
-    python_callable=find_and_push_file,
+        task_id='find_and_push_file',
+        python_callable=find_and_push_file,
     )
 
     load_to_clickhouse = ClickHouseOperator(
@@ -134,9 +134,15 @@ with DAG(
         settings={"input_format_tsv_crlf_end_of_line": 1}
     )
 
-    move_file = PythonOperator(
-        task_id='move_processed_file',
-        python_callable=move_processed_file,
+
+    
+    trigger_iceberg_dag = TriggerDagRunOperator(
+        task_id="trigger_iceberg_dag",
+        trigger_dag_id="aphis_to_iceberg",
+        wait_for_completion=True,
+        conf={
+        "filename": "{{ ti.xcom_pull(task_ids='find_and_push_file', key='matched_file_basename') }}"
+    }
     )
     
     trigger_dbt = TriggerDagRunOperator(
@@ -144,5 +150,10 @@ with DAG(
     trigger_dag_id="dbt_run", 
     wait_for_completion=True,     
     )
+    
+    move_file = PythonOperator(
+        task_id='move_processed_file',
+        python_callable=move_processed_file,
+    )
 
-    wait_for_aphis_file >> find_and_push >> load_to_clickhouse >> move_file >> trigger_dbt
+    wait_for_aphis_file >> find_and_push >> load_to_clickhouse >> trigger_iceberg_dag >> trigger_dbt >> move_file

@@ -14,8 +14,10 @@ USER airflow
 
 RUN pip install --upgrade pip \
  && pip install -r /tmp/requirements-clickhouse.txt \
- && pip install dbt-core dbt-clickhouse clickhouse-connect
+ && pip install dbt-core dbt-clickhouse clickhouse-connect \
+ && pip install pyiceberg pyarrow \
+ && pip install --upgrade pyarrow
 
 
-# ensure airflow user owns plugins/dags/logs folder defaults and dbt folder
+# ensure airflow user owns plugins/dags/logs folder defaults
 RUN mkdir -p /opt/airflow && chown -R 50000:50000 /opt/airflow || true

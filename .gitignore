@@ -3,3 +3,4 @@ logs/
 06_dbt/
 dbt_packages/
 processed/
+minio_data/

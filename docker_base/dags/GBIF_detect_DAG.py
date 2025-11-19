@@ -94,7 +94,7 @@ default_args = {
 }
 
 with DAG(
-    dag_id='gbif_tsv_to_messud_gbif',
+    dag_id='gbif_tsv_to_messud',
     default_args=default_args,
     start_date=days_ago(1),
     schedule_interval='@continuous',
