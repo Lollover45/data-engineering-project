@@ -1,6 +1,10 @@
 # The repository for the data engineering project for group 7 on the topic of the health of bee populations in US counties.
 
 
+The previous reports can be found in [P1_report.pdf](P1_report.pdf) for project 1 and [P2_report.pdf](P2_report.pdf) for project 2.
+
+<!-- The report for project 3 is in [P3_report.pdf](P3_report.pdf).) -->
+
 ## Team members
 * Remi Raugme
 * Annaliisa Vask
@@ -33,11 +37,13 @@ docker exec -it airflow-scheduler-project bash
 cd /dbt
 dbt deps
 ```
-5. Go to http://localhost:8080 log in. The user is airflow and password is airflow. Enable all the DAGs.
+5. Go to http://localhost:8080 log in. The user is `airflow` and password is `airflow`. Enable all the DAGs.
 
-6. Move the APHIS and GBIF files into their respective folders and everything should work.
+6. 
+   * Manually create 2 new folders with the names of `aphis` and `gbif` into the following path: `docker_base/sample_data/`. 
+   * Then move the file named `APHIS...short.csv` into `aphis` folder and `GBIF...short.txt` into `gbif` folder.
 
-7. The password for clickhouse webUI is 12345678.
+7. The password for clickhouse webUI is `12345678`.
 
 
 ## Visuals from Airflow
