@@ -18,6 +18,7 @@ import os
 #         "access-key-id": "minioadmin",
 #         "secret-access-key": "minioadmin",
 #         "path-style-access": True,
+#         "region": "us-east-1",
 #     },
 # )
 

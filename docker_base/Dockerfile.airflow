@@ -15,7 +15,7 @@ USER airflow
 RUN pip install --upgrade pip \
  && pip install -r /tmp/requirements-clickhouse.txt \
  && pip install dbt-core dbt-clickhouse clickhouse-connect \
- && pip install pyiceberg pyarrow \
+ && pip install pyiceberg pyarrow pandas \
  && pip install --upgrade pyarrow
 
 
