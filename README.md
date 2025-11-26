@@ -71,6 +71,7 @@ GRANT SELECT ON messud.* TO role_openmetadata;
    Host and Port: clickhouse-server-project:8123
    ```
    Test Connection!
+   -> Save
 
 4. Check the project: on the left menu choose Home -> My Data -> clickhouse_server_project
 
