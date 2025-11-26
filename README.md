@@ -93,8 +93,11 @@ GRANT SELECT ON messud.* TO role_openmetadata;
 
    7.3. Then click on the tab Pipelines
 
-   7.4. You should still see the row of the test case, but in column Actions click on the three dots and click Run.
-   PS! Sometimes the tests won't stop running. In that case try at least one of the following: refresh the browser tab, run it again, and/or create a new test case.
+   7.4. You should see the row of the test case, but in column Actions click on the three dots and click Run.
+   
+   7.5 If the test was completed, you should see the count change on either success, failed, or warning square.
+   
+   PS! Sometimes the tests won't stop running. In that case try some of these: refresh the browser tab, run it again, and/or create a new test case.
 
 ## Visuals from OpenMetadata
 ### The tables and columns descriptions
