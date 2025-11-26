@@ -43,6 +43,7 @@ dbt deps
 ### 9 Running Clickhouse roles (it is important to run all the 1.-7. steps beforehand)
 
 ### 10 Running OpenMetadata (it is important to run all the 1.-7. steps beforehand)
+PS! There might rise an issue that elastic search container won't stay running. If this happens then go in Docker UI Settings -> Resources and increase the Memory Limit value.
 
 1. Create a role that can access database on OpenMetadata
 ```bash
