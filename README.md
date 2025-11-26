@@ -44,7 +44,7 @@ dbt deps
 
 ### 10 Running OpenMetadata (it is important to run all the 1.-7. steps beforehand)
 
-1. Create role that can access database on OpenMetadata
+1. Create a role that can access database on OpenMetadata
 ```bash
 docker exec -it clickhouse-server-project clickhouse-client
 # then, inside the container:
@@ -61,7 +61,7 @@ GRANT SELECT ON messud.* TO role_openmetadata;
 
 3. In the OpenMetadata UI go to Settings -> Services -> Databases and open clickhouse_server_project_3. 
 
-If you can't see aforementioned service name then create the connection yourself following the next step on 3.1!
+   If you can't see aforementioned service name then create the connection yourself following the next step on 3.1!
 
    3.1. Add new service -> Clickhouse
    ```bash
@@ -70,7 +70,7 @@ If you can't see aforementioned service name then create the connection yourself
    Password: omd_very_secret_password
    Host and Port: clickhouse-server-project:8123
    ```
-    Test Connection
+   Test Connection!
 
 4. Check the project: on the left menu choose Home -> My Data -> clickhouse_server_project
 
@@ -79,9 +79,9 @@ If you can't see aforementioned service name then create the connection yourself
 6. Create tests: on the left menu choose Observability -> Data Quality -> Add a Test case
 
    We ran 3 test cases:
-   1. Column based, on table fact_observation, on column location_key, tested "values to be not null"
-   2. Column based, on table dim_organism, on column organism_key, tested "values to be unique"
-   3. Column based, on table dim_date, on column season, tested "values to be in set", allowed values (winter, spring, summer, autumn)
+   1. Column based, in table dim_organism, on column organism_key, tested "values to be unique"
+   2. Column based, in table fact_observation, on column location_key, tested "values to be not null"
+   3. Column based, in table dim_date, on column season, tested "values to be in set", allowed values (winter, spring, summer, autumn)
 
 7. Run the tests separately. 
 
@@ -95,7 +95,7 @@ If you can't see aforementioned service name then create the connection yourself
    PS! Sometimes the tests won't stop running. In that case try at least one of the following: refresh the browser tab, run it again, and/or create a new test case.
 
 ## Visuals from OpenMetadata
-### The table and column descriptions
+### The tables and columns descriptions
 
 ![fact_observations](visuals/OMD_fact_observations_table.png)
 ![](visuals/OMD_fact_observations_columns.png)
