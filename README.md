@@ -94,7 +94,7 @@ GRANT SELECT ON messud.* TO role_openmetadata;
 
    7.3. Then click on the tab Pipelines
 
-   7.4. You should see the row of the test case, but in column Actions click on the three dots and click Run.
+   7.4. You should see the row of the test case, where in column Actions click on the three dots and click Run.
    
    7.5 If the test was completed, you should see the count change on either success, failed, or warning square.
    
