@@ -1,0 +1,74 @@
+version: 2
+
+models:
+  - name: fact_observations
+    description: "Fact table containing observations from GBIF and APHIS datasets."
+    columns:
+      - name: OrganismKey
+        description: "Foreign key to dim_organism table."
+        tests:
+          - not_null
+      - name: LocationKey
+        description: "Foreign key to dim_location table."
+        tests:
+          - not_null
+      - name: DateKey
+        description: "Foreign key to dim_date table."
+        tests:
+          - not_null
+      - name: Occurrence
+        description: "Count of observations recorded."
+  
+  - name: dim_date
+    description: "Dimension table for date attributes."
+    columns:
+      - name: DateKey
+        description: "Surrogate primary key for the date."
+      - name: FullDate
+        description: "Full date in YYYY-MM-DD format."
+      - name: Year
+        description: "Calendar year."
+      - name: Month
+        description: "Calendar month as a number (1–12)."
+      - name: Season
+        description: "Season derived from the month (winter, spring, summer, autumn)."
+      - name: Decade
+        description: "Decade derived from the year."
+
+  - name: dim_location
+    description: "Dimension table for geographical locations."
+    columns:
+      - name: LocationKey
+        description: "Surrogate primary key for the location."
+      - name: Continent
+        description: "Continent where the observation took place."
+      - name: Country
+        description: "Country where the observation took place."
+      - name: State
+        description: "State or province where the observation took place."
+      - name: County
+        description: "County where the observation took place."
+      - name: Latitude
+        description: "Latitude coordinate of the location (if available)."
+      - name: Longitude
+        description: "Longitude coordinate of the location (if available)."
+
+  - name: dim_organism
+    description: "Dimension table for organisms."
+    columns:
+      - name: OrganismKey
+        description: "Surrogate primary key for the organism."
+      - name: Type
+        description: "Category of the organism (e.g., bee, pest, virus)."
+      - name: Name
+        description: "Common or recorded name for the organism."
+      - name: ScientificName
+        description: "Scientific name of the organism, if available."
+      - name: Unit
+        description: "Measurement unit used for the organism count (e.g., count, NA)."
+      - name: valid_from
+        description: "Timestamp when the organism record version became valid."
+      - name: valid_to
+        description: "Timestamp when the organism record version expired (NULL for current)."
+      - name: is_current
+        description: "Flag indicating whether this is the current version of the organism record."
