@@ -7,7 +7,7 @@
          
 
 
-        insert into `messud`.`stg_aphis_long__dbt_backup`
+        insert into `messud`.`stg_aphis_long`
         ("sample_year", "sample_month_number", "sample_month", "state_code", "sampling_county", "pest_name", "value")SELECT
     sample_year,
     sample_month_number,

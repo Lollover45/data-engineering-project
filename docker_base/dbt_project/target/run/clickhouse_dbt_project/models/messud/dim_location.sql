@@ -7,7 +7,7 @@
          
 
 
-        insert into `messud`.`dim_location__dbt_backup`
+        insert into `messud`.`dim_location`
         ("LocationKey", "Continent", "Country", "State", "County", "Latitude", "Longitude")/* Model SQL for dim.Organism.
 Joins together data from both GBIF and Aphis datasets. 
 For GBIF, staging is not used. In the case of APHIs, the staging model stg_aphis_long, which was used to change the data into long format, will be referenced.

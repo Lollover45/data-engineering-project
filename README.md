@@ -1,8 +1,6 @@
 # The repository for the data engineering project for group 7 on the topic of the health of bee populations in US counties.
 
 
-The previous reports can be found in [P1_report.pdf](P1_report.pdf) for project 1 and [P2_report.pdf](P2_report.pdf) for project 2.
-
 <!-- The report for project 3 is in [P3_report.pdf](P3_report.pdf).) -->
 
 ## Team members
@@ -15,7 +13,7 @@ The previous reports can be found in [P1_report.pdf](P1_report.pdf) for project 
 
 Bees are important pollinators and thus are an integral part of terrestrial ecosystems. Due to anthropogenic factors, such as climate change, pollution and habitat destruction, bee populations are in a decline globally. This issue is made worse due to the spread of pests and viruses which wipe out bee colonies. These pests can be Varroa mites and Nosema fungi which often co-occur and can cause devastating losses among bee colonies. In order to better protect the functioning of our ecosystems, it is of high importance to establish methods that can help predict which environments are most suitable for bees. Additionally, these pests and viruses have an effect on the food industry, as their infections can cause financial loss for beekeepers. With our project we are combining two datasets to describe patterns behind successful beekeeping.
 
-The previous project report files have also been uploaded to our repository.
+The previous reports can be found in Reports folder [P1_Group_07.pdf](Reports/P1_Group_07.pdf) for project 1 and [P2_Group_07.pdf](Reports/P2_Group_07.pdf) for project 2.
 
 ## Running the project
 ### Run the project (run these in order)
@@ -32,8 +30,7 @@ docker compose up -d
 
 3. Create ClickHouse database and tables
 ```bash
-docker exec -it clickhouse-server-project \
-    clickhouse-client --multiquery --queries-file=/sql/create_db_and_tables.sql
+docker exec -it clickhouse-server-project clickhouse-client --multiquery --queries-file=/sql/create_db_and_tables.sql
 ```
 
 4. Enter the Airflow scheduler container and install dbt dependencies
@@ -45,30 +42,37 @@ dbt deps
 ```
 5. Go to http://localhost:8080 log in. The user is `airflow` and password is `airflow`. Enable all the DAGs.
 
-6. 
+6. Inserting data using airflow
    * Manually create 2 new folders with the names of `aphis` and `gbif` into the following path: `docker_base/sample_data/`. 
    * Then move the file named `APHIS...short.csv` into `aphis` folder and `GBIF...short.txt` into `gbif` folder.
 
-7. The password for clickhouse webUI is `12345678`.
+7. The password for clickhouse webUI is `12345678` and user is default.
 
-### 8 Running Iceberg (it is important to run all the 1.-7. steps beforehand)
-### 9 Running Clickhouse roles (it is important to run all the 1.-7. steps beforehand)
+8. Running Iceberg (it is important to run all the 1.-7. steps beforehand)
+   * Got to http://localhost:9101 log in to MinIO. The user is `minioadmin` and password is `minioadmin`.
+   * Create a bucket called `messud-bucket`. 
+   * Run the following command to create iceberg database and connection
+   ```bash
+   docker exec -it clickhouse-server-project clickhouse-client --multiquery --queries-file=/sql/iceberg_create_db_and_tables.sql
+   ```
+
+9. Running Clickhouse roles and views (it is important to run all the 1.-7. steps beforehand)
+   * Run this command for roles
+   ```bash
+   docker exec -it clickhouse-server-project clickhouse-client --multiquery --queries-file=/sql/clickhouse_roles.sql
+   ```
+   * Run this command for views
+   ```bash
+   docker exec -it clickhouse-server-project clickhouse-client --multiquery --queries-file=/sql/clickhouse_views.sql
+   ```
 
 ### 10 Running OpenMetadata (it is important to run all the 1.-7. steps beforehand)
 PS! There might rise an issue that elastic search container won't stay running. If this happens then go in Docker UI Settings -> Resources and increase the Memory Limit value.
 
 1. Create a role that can access database on OpenMetadata
 ```bash
-docker exec -it clickhouse-server-project clickhouse-client
-# then, inside the container:
-DROP ROLE IF EXISTS role_openmetadata; 
-DROP USER IF EXISTS service_openmetadata; 
-CREATE ROLE role_openmetadata;
-CREATE USER service_openmetadata IDENTIFIED WITH sha256_password BY 'omd_very_secret_password';
-GRANT role_openmetadata TO service_openmetadata;
-GRANT SELECT, SHOW ON system.* to role_openmetadata;
-GRANT SELECT ON messud.* TO role_openmetadata;
-```
+   docker exec -it clickhouse-server-project clickhouse-client --multiquery --queries-file=/sql/omd_role.sql
+   ```
 
 2. Go to http://localhost:8585 and log in. The username is admin@open-metadata.org and password is admin.
 
@@ -120,17 +124,8 @@ Scroll down to the "Visuals from OpenMetadata" section to see screenshots of the
 1. Create a role that will be used to access Apache superset
 
 ```bash
-docker exec -it clickhouse-server-project clickhouse-client
-
-# inside the container: 
-DROP ROLE IF EXISTS role_superset; 
-DROP USER IF EXISTS user_superset; 
-CREATE ROLE role_superset;
-CREATE USER user_superset IDENTIFIED WITH sha256_password BY 'ss_very_secret_password';
-GRANT role_superset TO user_superset;
-GRANT SELECT ON messud.* TO role_superset;
-
-```
+   docker exec -it clickhouse-server-project clickhouse-client --multiquery --queries-file=/sql/superset_role.sql
+   ```
 2. Go to http://localhost:8088. Log in with the default credentials (username: admin; password: admin)
 
 3. Once you have accessed the superset UI it is time to connect it to the database:
@@ -198,6 +193,10 @@ These were the steps used to connect Superset with OpenMetadata:
 ![Superset OMD](visuals/OMD_superset.png)
 
 ## Visuals from OpenMetadata
+
+<details>
+<summary> Click Me to see content </summary>
+
 ### The tables and columns descriptions
 
 ![fact_observations](visuals/OMD_fact_observations_table.png)
@@ -216,7 +215,13 @@ These were the steps used to connect Superset with OpenMetadata:
 ### The results of the three test cases
 ![test_results](visuals/OMD_tests_results.png)
 
+</details>
+
 ## Visuals from Superset
+
+<details>
+<summary> Click Me to see content </summary>
+
 ### Superset Dashboard 
 ![Superset dashboard](visuals/Messud_dashboard.png)
 
@@ -225,7 +230,12 @@ These were the steps used to connect Superset with OpenMetadata:
 ### Business question 6: Which county is most popular for beekeeping and which is most safe from pests? 
 ![Business q3](visuals/BQ6_linechart.png)
 
+</details>
+
 ## Visuals from Airflow
+<details>
+<summary> Click Me to see content </summary>
+
 ### The DAGs used in the project
 ![Airflow DAGs](visuals/airflow_dags.png)
 ### Aphis DAG
@@ -235,8 +245,13 @@ These were the steps used to connect Superset with OpenMetadata:
 ### dbt DAG
 ![dbt DAG](visuals/airflow_dbt_dag.png)
 
+</details>
 
 ## Results for analytical queries
+
+<details>
+<summary> Click Me to see content </summary>
+
 The queries can be found in docker_base/sql/demo_queries.sql
 1. From the three  counties with the highest average virus prevalence - how many bees were detected during the year 2024?
  ![top virus](visuals/top3_virus.png)
@@ -250,6 +265,9 @@ The queries can be found in docker_base/sql/demo_queries.sql
  ![nosema max](visuals/top5_max_nosema.png)
 6. Which county is most popular for beekeeping and which is most safe from pests?
  ![pest score](visuals/pest_score.png)
+
+</details>
+
 ## Known issues
 
 ### Duplicate ingestion

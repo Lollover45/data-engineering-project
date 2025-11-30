@@ -15,8 +15,8 @@ services:
     image: minio/minio:RELEASE.2024-10-13T13-34-11Z
     container_name: minio
     ports:
-      - "9200:9000"   # MinIO API
-      - "9201:9001"   # MinIO Console
+      - "9100:9000"   # MinIO API
+      - "9101:9001"   # MinIO Console
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
@@ -201,6 +201,8 @@ services:
     container_name: superset_cache
     volumes:
       - redis:/data
+    networks:
+      iceberg_network:
       
   # --- Internal postgres database for Superset metadata ---
   db:
@@ -214,6 +216,8 @@ services:
     volumes:
       - db_home:/var/lib/postgresql/data
       - ./docker/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    networks:
+      iceberg_network:
 
   # --- Superset web application UI ---
   superset:
@@ -235,6 +239,8 @@ services:
       - ./docker:/app/docker
       - superset_home:/app/superset_home
       - ./docker/requirements-local.txt:/app/docker/requirements-local.txt
+    networks:
+      iceberg_network:
  
 
   # --- Superset startup initialization ---
@@ -256,6 +262,8 @@ services:
     volumes: *superset-volumes
     healthcheck:
       disable: true
+    networks:
+      iceberg_network:
       
   # --- Celery worker ---
   superset-worker:
@@ -278,6 +286,8 @@ services:
           "CMD-SHELL",
           "celery -A superset.tasks.celery_app:app inspect ping -d celery@$$HOSTNAME",
         ]
+    networks:
+      iceberg_network:
         
   # --- Celery scheduler---
   superset-worker-beat:
@@ -296,6 +306,8 @@ services:
     volumes: *superset-volumes
     healthcheck:
       disable: true
+    networks:
+      iceberg_network:
 
 
   # ========= OpenMetadata stack =========
@@ -319,6 +331,8 @@ services:
       interval: 15s
       timeout: 120s 
       retries: 10
+    networks:
+      iceberg_network:
 
   # --- OpenMetadata Elasticsearch ---
   elasticsearch:
@@ -338,6 +352,8 @@ services:
       retries: 10
     volumes:
       - es-data:/usr/share/elasticsearch/data
+    networks:
+      iceberg_network:
 
   # --- OpenMetadata migrate (üks kord) ---
   execute-migrate-all:
@@ -514,6 +530,8 @@ services:
         condition: service_healthy
       mysql:
         condition: service_healthy
+    networks:
+      iceberg_network:
 
   # --- OpenMetadata server (UI + API) ---
   openmetadata-server:
@@ -581,6 +599,8 @@ services:
         condition: service_completed_successfully
     healthcheck:
       test: [ "CMD", "wget", "-q", "--spider",  "http://localhost:8586/healthcheck" ]
+    networks:
+      iceberg_network:
 
   # --- OpenMetadata ingestion (oma Airflow, mitte sinu oma) ---
   ingestion:
@@ -617,6 +637,8 @@ services:
       - ingestion-volume-dag-airflow:/opt/airflow/dag_generated_configs
       - ingestion-volume-dags:/opt/airflow/dags
       - ingestion-volume-tmp:/tmp
+    networks:
+      iceberg_network:
      
      
 
@@ -634,5 +656,4 @@ volumes:
     external: false
   redis:
     external: false
-    
   minio_data:

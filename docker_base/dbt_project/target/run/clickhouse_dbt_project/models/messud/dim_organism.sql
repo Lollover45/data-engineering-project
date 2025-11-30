@@ -8,7 +8,7 @@
          
 
 
-        insert into `messud`.`dim_organism__dbt_new_data_9ff22b18_09a1_4f40_820e_cd479ff074e6`
+        insert into `messud`.`dim_organism__dbt_new_data_e90b333d_12ce_417d_9c34_95a931405a5c`
         ("OrganismKey", "Type", "Name", "ScientificName", "Unit", "valid_from", "valid_to", "is_current")
 
 WITH gbif_organisms AS (

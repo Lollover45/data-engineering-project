@@ -7,7 +7,7 @@
          
 
 
-        insert into `messud`.`dim_date__dbt_backup`
+        insert into `messud`.`dim_date`
         ("DateKey", "FullDate", "Year", "Month", "Season", "Decade")/* Model SQL for dim.Date.
 Joins together data from both GBIF and Aphis datasets. 
 For GBIF, staging is not used. In the case of APHIs, the staging model stg_aphis_long, which was used to change the data into long format, will be referenced.

@@ -7,7 +7,7 @@
          
 
 
-        insert into `messud`.`fact_observations__dbt_backup`
+        insert into `messud`.`fact_observations`
         ("OrganismKey", "LocationKey", "DateKey", "Occurrence")/* SQL for the fact table Observations
 Joins together data from both GBIF and Aphis datasets using the established models. 
 For GBIF, staging is not used. In the case of APHIs, the staging model stg_aphis_long, which was used to change the data into long format, will be referenced.
