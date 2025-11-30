@@ -126,9 +126,13 @@ GRANT SELECT ON messud.* TO role_superset;
 2. Go to http://localhost:8088. Log in with the default credentials (username: admin; password: admin)
 
 3. Once you have accessed the superset UI it is time to connect it to the database:
+   
     3.1 Go to datasets and click + Datset
+   
     3.2 In the "Connect a database" window search for "ClickHouse Connect (Superset) in the supported databases list
+   
     3.3 Next, connect as follows:
+   
     ```bash
     Host: clickhouse-server-project
     Port: 8123
@@ -147,9 +151,13 @@ These were the steps used to connect Superset with OpenMetadata:
 
 1. Go to http://localhost:8585. The username is admin@open-metadata.org and password is admin.
     1.1 From the left side menu, open "Settings". Then proceed to Services -> Dashboards.
+
     1.2 Click "Add New Service"
+   
     1.3 From the Dashboard services, select Superset.
+   
     1.4 Next, connect with the service as follows:
+   
     ```bash
     Host And Port: http://superset_app:8088
     Superset Connection: SupersetApiConnection
