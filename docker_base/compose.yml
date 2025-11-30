@@ -1,3 +1,11 @@
+x-superset-image: &superset-image apachesuperset.docker.scarf.sh/apache/superset:4.0.2
+x-superset-volumes: 
+  &superset-volumes
+  - ./docker:/app/docker
+  # - ./superset-core:/app/superset-core
+  - superset_home:/app/superset_home
+  - ./docker/requirements-local.txt:/app/docker/requirements-local.txt
+
 services:
   # --- Airflow metadata database (Postgres) ---
   airflow-db-project:
@@ -122,6 +130,111 @@ services:
       - clickhouse-server-project
     restart: always
 
+# ========= Apache Superset stack =========   
+
+  # --- Message broker and cache backend---
+  redis:
+    image: redis:7
+    container_name: superset_cache
+    volumes:
+      - redis:/data
+      
+  # --- Internal postgres database for Superset metadata ---
+  db:
+    env_file:
+      - path: .env # default
+        required: true
+      - path: .env-local # optional override
+        required: false
+    image: postgres:16
+    container_name: superset_db
+    volumes:
+      - db_home:/var/lib/postgresql/data
+      - ./docker/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+
+  # --- Superset web application UI ---
+  superset:
+    env_file:
+      - path: .env # default
+        required: true
+      - path: .env-local # optional override
+        required: false
+    image: *superset-image
+    container_name: superset_app
+    command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
+    user: "root"
+    ports:
+      - 8088:8088
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+    volumes:
+      - ./docker:/app/docker
+      - superset_home:/app/superset_home
+      - ./docker/requirements-local.txt:/app/docker/requirements-local.txt
+ 
+
+  # --- Superset startup initialization ---
+  superset-init:
+    image: *superset-image
+    container_name: superset_init
+    command: ["/app/docker/docker-init.sh"]
+    env_file:
+      - path: .env # default
+        required: true
+      - path: .env-local # optional override
+        required: false
+    depends_on:
+      db:
+        condition: service_started
+      redis:
+        condition: service_started
+    user: "root"
+    volumes: *superset-volumes
+    healthcheck:
+      disable: true
+      
+  # --- Celery worker ---
+  superset-worker:
+    image: *superset-image
+    container_name: superset_worker
+    command: ["/app/docker/docker-bootstrap.sh", "worker"]
+    env_file:
+      - path: .env # default
+        required: true
+      - path: .env-local # optional override
+        required: false
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+    user: "root"
+    volumes: *superset-volumes
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "celery -A superset.tasks.celery_app:app inspect ping -d celery@$$HOSTNAME",
+        ]
+        
+  # --- Celery scheduler---
+  superset-worker-beat:
+    image: *superset-image
+    container_name: superset_worker_beat
+    command: ["/app/docker/docker-bootstrap.sh", "beat"]
+    env_file:
+      - path: .env # default
+        required: true
+      - path: .env-local # optional override
+        required: false
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+    user: "root"
+    volumes: *superset-volumes
+    healthcheck:
+      disable: true
+
+
   # ========= OpenMetadata stack =========
 
   # --- OpenMetadata MySQL ---
@@ -141,7 +254,7 @@ services:
     healthcheck:
       test: mysql --user=root --password=$$MYSQL_ROOT_PASSWORD --silent --execute "use openmetadata_db"
       interval: 15s
-      timeout: 10s
+      timeout: 120s 
       retries: 10
 
   # --- OpenMetadata Elasticsearch ---
@@ -428,6 +541,8 @@ services:
       DB_USER: ${AIRFLOW_DB_USER:-airflow_user}
       DB_PASSWORD: ${AIRFLOW_DB_PASSWORD:-airflow_pass}
       DB_PROPERTIES: ${AIRFLOW_DB_PROPERTIES:-}
+      DASHBOARD_SERVICE_HOST: superset
+      DASHBOARD_SERVICE_PORT: 8088
     entrypoint: /bin/bash
     command:
       - "/opt/airflow/ingestion_dependency.sh"
@@ -439,6 +554,8 @@ services:
       - ingestion-volume-dag-airflow:/opt/airflow/dag_generated_configs
       - ingestion-volume-dags:/opt/airflow/dags
       - ingestion-volume-tmp:/tmp
+     
+     
 
 volumes:
   pgdata_airflow-project:
@@ -448,3 +565,10 @@ volumes:
   ingestion-volume-dags:
   ingestion-volume-tmp:
   es-data:
+  superset_home:
+    external: false
+  db_home:
+    external: false
+  redis:
+    external: false
+    

@@ -7,6 +7,12 @@
 * Selene Margaret Pruuden
 * Victoria Prins
 
+# Introduction
+
+Bees are important pollinators and thus are an integral part of terrestrial ecosystems. Due to anthropogenic factors, such as climate change, pollution and habitat destruction, bee populations are in a decline globally. This issue is made worse due to the spread of pests and viruses which wipe out bee colonies. These pests can be Varroa mites and Nosema fungi which often co-occur and can cause devastating losses among bee colonies. In order to better protect the functioning of our ecosystems, it is of high importance to establish methods that can help predict which environments are most suitable for bees. Additionally, these pests and viruses have an effect on the food industry, as their infections can cause financial loss for beekeepers. With our project we are combining two datasets to describe patterns behind successful beekeeping.
+
+The previous project report files have also been uploaded to our repository.
+
 ## Running the project
 ### Run the project (run these in order)
 
@@ -100,6 +106,91 @@ GRANT SELECT ON messud.* TO role_openmetadata;
    
    PS! Sometimes the tests won't stop running. In that case try some of these: refresh the browser tab, run it again, and/or create a new test case.
 
+Scroll down to the "Visuals from OpenMetadata" section to see screenshots of the setup.
+
+### 11 Running Apache Superset (it is important to run all the 1.-7. and 10. steps beforehand)
+#### 11.1 Connecting Superset with ClickHouse
+
+1. Create a role that will be used to access Apache superset
+
+```bash
+docker exec -it clickhouse-server-project clickhouse-client
+
+# inside the container: 
+DROP ROLE IF EXISTS role_superset; 
+DROP USER IF EXISTS user_superset; 
+CREATE ROLE role_superset;
+CREATE USER user_superset IDENTIFIED WITH sha256_password BY 'ss_very_secret_password';
+GRANT role_superset TO user_superset;
+GRANT SELECT ON messud.* TO role_superset;
+
+```
+2. Go to http://localhost:8088. Log in with the default credentials (username: admin; password: admin)
+
+3. Once you have accessed the superset UI it is time to connect it to the database:
+   
+    3.1 Go to datasets and click + Datset
+   
+    3.2 In the "Connect a database" window search for "ClickHouse Connect (Superset) in the supported databases list
+   
+    3.3 Next, connect as follows:
+   
+    ```bash
+    Host: clickhouse-server-project
+    Port: 8123
+    Database name: messud
+    Username: user_superset
+    Password: ss_very_secret_password
+    ```
+You now have successfully connected ClickHouse and Superset. 
+
+The dashboard included a filter for the average pest score value, which enables users to select ranges for the pest scores.
+
+Scroll down for the visuals of Superset.
+
+#### 11.2 Connecting Superset with OpenMetadata
+Unfortunately, the latest version of Superset does not support stable connection to OpenMetadata, which is why the pipeline uses an older version. However, despite testing with various different version of both Superset and OpenMetadata, the Superset dashboards did not appear in OpenMetadata. There were no connection issues nor any errors logs. 
+
+These were the steps used to connect Superset with OpenMetadata:
+
+1. Go to http://localhost:8585. The username is admin@open-metadata.org and password is admin.
+    1.1 From the left side menu, open "Settings". Then proceed to Services -> Dashboards.
+
+    1.2 Click "Add New Service"
+   
+    1.3 From the Dashboard services, select Superset.
+   
+    1.4 Next, connect with the service as follows:
+   
+    ```bash
+    Host And Port: http://superset_app:8088
+    Superset Connection: SupersetApiConnection
+    Provider: db
+    Username: admin
+    Password: admin
+    ```
+    1.4.1 Alternatively, you can create another user. However, if you intend to go this route, you must either create the graphs and dashboards with the said user OR give the said user ownership of the dashboard.
+    ```bash'
+    # entering the superset container
+    
+    docker exec -it superset_app bash
+    
+    # create the custom user
+    superset fab create-user \
+    --username om_user \
+    --firstname Open \
+    --lastname Metadata \
+    --email om_user@example.com \
+    --password "metadata_very_secret_password" \
+    --role Admin
+    ``
+    Log in with these credentials instead.
+    1.5 Test the connection.
+    1.6 Connnect
+
+### View of Superset in OpenMetadata
+![Superset OMD](visuals/OMD_superset.png)
+
 ## Visuals from OpenMetadata
 ### The tables and columns descriptions
 
@@ -119,6 +210,14 @@ GRANT SELECT ON messud.* TO role_openmetadata;
 ### The results of the three test cases
 ![test_results](visuals/OMD_tests_results.png)
 
+## Visuals from Superset
+### Superset Dashboard 
+![Superset dashboard](visuals/Messud_dashboard.png)
+
+### Business question 2: How many bee occurrences are there in the 10 counties with the fewest Varroa mites? 
+![Business q2](visuals/BQ2_bubble_chart.png)
+### Business question 6: Which county is most popular for beekeeping and which is most safe from pests? 
+![Business q3](visuals/BQ6_linechart.png)
 
 ## Visuals from Airflow
 ### The DAGs used in the project
