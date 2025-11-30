@@ -149,16 +149,16 @@ The dashboard included a filter for the average pest score value, which enables 
 
 Scroll down for the visuals of Superset.
 
-##### Results interpretation
-1. Business question 1: From the three counties with the highest average virus prevalence - how many bees were detected during the year 2024?
+#### Results interpretation
+**1. Business question 1: From the three counties with the highest average virus prevalence - how many bees were detected during the year 2024?**
 
 According to the table BQ1_table, the three counties that had the highest average virus prevalence were Jefferson (60% of bees infected), Washington (59%) and Prince George (58%). From these counties, 63, 53 and 1596 bees were detected respectively.  The differences between bee occurrences are quite large, indicating that there may be other variables that affect the number of bees.
 
-2. Business question 2:How many bee occurrences are there in the five counties with the fewest Varroa mites?
+**2. Business question 2:How many bee occurrences are there in the five counties with the fewest Varroa mites?**
 
 The graph BQ2_bubblecharts depicts 10 counties with the fewest Varroa mites. The five counties with the fewest Varroa mites were: Swift, Madera, Carver, Jones and Maui. From these five, Maui had both the highest number of bee occurrences (~400) and the highest average number of Varroa occurrences (2.25).
 
-3. Business question 6: Which county is most popular for beekeeping and which is most safe from pests?
+**3. Business question 6: Which county is most popular for beekeeping and which is most safe from pests?**
 
 In the table BQ6_chart it can be seen that Prince George's is the most popular county for beekeeping, as 57,000 bee occurrences were detected. However, it can be seen from the chart that it also has one of the highest overall pest scores of the counties with highest bee occurrences. This could indicate that pests are easily spread in areas with large numbers of bee colonies. In the BQ6_lineechart, it can be seen that slight rises in pest scores across counties can cause dips in the number of bees detected, and vice-versa.
 
