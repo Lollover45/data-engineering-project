@@ -136,7 +136,9 @@ GRANT SELECT ON messud.* TO role_superset;
     Username: user_superset
     Password: ss_very_secret_password
     ```
-You now have successfully connected ClickHouse and Superset. Example sql for a dataset creation for easy visualization is given in the /sql folder.
+You now have successfully connected ClickHouse and Superset. 
+
+The dashboard included a filter for the average pest score value, which enables users to select ranges for the pest scores.
 
 #### 11.2 Connecting Superset with OpenMetadata
 Unfortunately, the latest version of Superset does not support stable connection to OpenMetadata, which is why the pipeline uses an older version. However, despite testing with various different version of both Superset and OpenMetadata, the Superset dashboards did not appear in OpenMetadata. There were no connection issues nor any errors logs. 
@@ -194,11 +196,13 @@ These were the steps used to connect Superset with OpenMetadata:
 ![test_results](visuals/OMD_tests_results.png)
 
 ## Visuals from Superset
-### Business question 1
-### Business question 2
-### Business question 3
-### Business question 4
-### Business question 5
+### Superset Dashboard 
+![Superset dashboard] (visuals/Messud_dashboard.png)
+
+### Business question 2: How many bee occurrences are there in the 10 counties with the fewest Varroa mites? 
+![Business q2] (visuals/BQ2_bubble_chart.png)
+### Business question 6: Which county is most popular for beekeeping and which is most safe from pests? 
+![Business q3] (visuals/BQ6_linechart.png)
 
 ## Visuals from Airflow
 ### The DAGs used in the project
