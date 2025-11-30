@@ -83,7 +83,7 @@ GRANT SELECT ON messud.* TO role_openmetadata;
 
 4. Check the project: on the left menu choose Home -> My Data -> clickhouse_server_project
 
-5. Check the tables (and add descriptions): on the left menu choose Explore -> Databases -> clickhouse -> clickhouse_server_project (with "_3" at the end if you didn't need to create the connection)
+5. Once the agents have finished, you can check the tables (and add descriptions if you'd like to): on the left menu choose Explore -> Databases -> clickhouse -> clickhouse_server_project (with "_3" at the end if you didn't need to create the connection) -> <table_name> (our tables are dim_date, dim_location, dim_organism, fact_observations)
 
 6. Create tests: on the left menu choose Observability -> Data Quality -> Add a Test case
 
@@ -100,7 +100,7 @@ GRANT SELECT ON messud.* TO role_openmetadata;
 
    7.3. Then click on the tab Pipelines
 
-   7.4. You should see the row of the test case, but in column Actions click on the three dots and click Run.
+   7.4. You should see the row of the test case, where in column Actions click on the three dots and click Run.
    
    7.5 If the test was completed, you should see the count change on either success, failed, or warning square.
    
