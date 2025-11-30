@@ -146,6 +146,8 @@ You now have successfully connected ClickHouse and Superset.
 
 The dashboard included a filter for the average pest score value, which enables users to select ranges for the pest scores.
 
+Scroll down for the visuals of Superset.
+
 #### 11.2 Connecting Superset with OpenMetadata
 Unfortunately, the latest version of Superset does not support stable connection to OpenMetadata, which is why the pipeline uses an older version. However, despite testing with various different version of both Superset and OpenMetadata, the Superset dashboards did not appear in OpenMetadata. There were no connection issues nor any errors logs. 
 
