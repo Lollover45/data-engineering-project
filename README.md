@@ -209,12 +209,12 @@ These were the steps used to connect Superset with OpenMetadata:
 
 ## Visuals from Superset
 ### Superset Dashboard 
-![Superset dashboard] (visuals/Messud_dashboard.png)
+![Superset dashboard](visuals/Messud_dashboard.png)
 
 ### Business question 2: How many bee occurrences are there in the 10 counties with the fewest Varroa mites? 
-![Business q2] (visuals/BQ2_bubble_chart.png)
+![Business q2](visuals/BQ2_bubble_chart.png)
 ### Business question 6: Which county is most popular for beekeeping and which is most safe from pests? 
-![Business q3] (visuals/BQ6_linechart.png)
+![Business q3](visuals/BQ6_linechart.png)
 
 ## Visuals from Airflow
 ### The DAGs used in the project
