@@ -188,6 +188,9 @@ These were the steps used to connect Superset with OpenMetadata:
     1.5 Test the connection.
     1.6 Connnect
 
+### View of Superset in OpenMetadata
+![Superset OMD](OMD_superset.png)
+
 ## Visuals from OpenMetadata
 ### The tables and columns descriptions
 
