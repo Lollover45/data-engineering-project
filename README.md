@@ -48,7 +48,7 @@ dbt deps
 
 7. The password for clickhouse webUI is `12345678` and user is default.
 
-8. Running Iceberg (it is important to run all the 1.-7. steps beforehand)
+### 8 Running Iceberg (it is important to run all the 1.-7. steps beforehand)
    * Got to http://localhost:9101 log in to MinIO. The user is `minioadmin` and password is `minioadmin`.
    * Create a bucket called `messud-bucket`. 
    * Run the following command to create iceberg database and connection
@@ -56,7 +56,7 @@ dbt deps
    docker exec -it clickhouse-server-project clickhouse-client --multiquery --queries-file=/sql/iceberg_create_db_and_tables.sql
    ```
 
-9. Running Clickhouse roles and views (it is important to run all the 1.-7. steps beforehand)
+### 9 Running Clickhouse roles and views (it is important to run all the 1.-7. steps beforehand)
    * Run this command for roles
    ```bash
    docker exec -it clickhouse-server-project clickhouse-client --multiquery --queries-file=/sql/clickhouse_roles.sql
