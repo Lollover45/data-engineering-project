@@ -76,9 +76,9 @@ PS! There might rise an issue that elastic search container won't stay running. 
 
 2. Go to http://localhost:8585 and log in. The username is admin@open-metadata.org and password is admin.
 
-3. In the OpenMetadata UI go to Settings -> Services -> Databases and open clickhouse_server_project_3. 
+3. In the OpenMetadata UI go to Settings -> Services -> Databases and open clickhouse_server_project. 
 
-   If you can't see aforementioned service name then create the connection yourself following the next step on 3.1!
+   If you can't see the aforementioned service name then create the connection yourself following the next step on 3.1!
 
    3.1. Add new service -> Clickhouse
    ```bash
@@ -93,7 +93,7 @@ PS! There might rise an issue that elastic search container won't stay running. 
 
 4. Check the project: on the left menu choose Home -> My Data -> clickhouse_server_project
 
-5. Once the agents have finished, you can check the tables (and add descriptions if you'd like to): on the left menu choose Explore -> Databases -> clickhouse -> clickhouse_server_project (with "_3" at the end if you didn't need to create the connection) -> <table_name> (our tables are dim_date, dim_location, dim_organism, fact_observations)
+5. Once the agents have finished, you can check the tables (and add descriptions if you'd like to): on the left menu choose Explore -> Databases -> clickhouse -> clickhouse_server_project -> <table_name> (our gold layer tables are dim_date, dim_location, dim_organism, fact_observations)
 
 6. Create tests: on the left menu choose Observability -> Data Quality -> Add a Test case
 
@@ -106,15 +106,15 @@ PS! There might rise an issue that elastic search container won't stay running. 
 
    7.1. Make sure that you are on Observability -> Data Quality page 
 
-   7.2. Then from the "Test Case Insights" section find column "Table" and click on one of the values (clickhouse_server_project.default.messud.<table_name>) on respective test case you want to test out. 
+   7.2. Then from the "Test Case Insights" section find column "Table" and click on one of the values (clickhouse_server_project.default.messud.<table_name>) on the respective test case you want to test out. 
 
    7.3. Then click on the tab Pipelines
 
-   7.4. You should see the row of the test case, where in column Actions click on the three dots and click Run.
+   7.4. You should see the row of the test case, where in column Actions click on the three dots and then click Run.
    
    7.5 If the test was completed, you should see the count change on either success, failed, or warning square.
    
-   PS! Sometimes the tests won't stop running. In that case try some of these: refresh the browser tab, run it again, and/or create a new test case.
+   PS! Sometimes the tests won't stop running. In that case try some of these: refresh the browser tab, rerun it, and/or create a new test case.
 
 Scroll down to the "Visuals from OpenMetadata" section to see screenshots of the setup.
 
@@ -130,7 +130,7 @@ Scroll down to the "Visuals from OpenMetadata" section to see screenshots of the
 
 3. Once you have accessed the superset UI it is time to connect it to the database:
    
-    3.1 Go to datasets and click + Datset
+    3.1 Go to datasets and click on "+" then on "Data" and finally on "Connect Database"
    
     3.2 In the "Connect a database" window search for "ClickHouse Connect (Superset) in the supported databases list
    
@@ -150,7 +150,7 @@ The dashboard included a filter for the average pest score value, which enables 
 Scroll down for the visuals of Superset.
 
 #### 11.2 Connecting Superset with OpenMetadata
-Unfortunately, the latest version of Superset does not support stable connection to OpenMetadata, which is why the pipeline uses an older version. However, despite testing with various different version of both Superset and OpenMetadata, the Superset dashboards did not appear in OpenMetadata. There were no connection issues nor any errors logs. 
+Unfortunately, the latest version of Superset does not support stable connection to OpenMetadata, which is why the pipeline uses an older version. However, despite testing with various different versions of both Superset and OpenMetadata, the Superset dashboards did not appear in OpenMetadata. There were no connection issues nor any errors logs. 
 
 These were the steps used to connect Superset with OpenMetadata:
 
