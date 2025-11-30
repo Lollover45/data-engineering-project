@@ -110,7 +110,9 @@ Scroll down to the "Visuals from OpenMetadata" section to see screenshots of the
 
 ### 11 Running Apache Superset (it is important to run all the 1.-7. and 10. steps beforehand)
 #### 11.1 Connecting Superset with ClickHouse
+
 1. Create a role that will be used to access Apache superset
+
 ```bash
 docker exec -it clickhouse-server-project clickhouse-client
 
