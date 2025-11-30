@@ -232,7 +232,7 @@ These were the steps used to connect Superset with OpenMetadata:
 
 </details>
 
-## Visuals from Airflow
+## Visuals from Airflow (project 2)
 <details>
 <summary> Click Me to see content </summary>
 
@@ -247,7 +247,7 @@ These were the steps used to connect Superset with OpenMetadata:
 
 </details>
 
-## Results for analytical queries
+## Results for analytical queries (project 2)
 
 <details>
 <summary> Click Me to see content </summary>
@@ -268,7 +268,7 @@ The queries can be found in docker_base/sql/demo_queries.sql
 
 </details>
 
-## Known issues
+## Known issues (project 2)
 
 ### Duplicate ingestion
 Sadly we couldn't get non duplicate ingestion working properly. Found a [webpage](https://cc.davelozinski.com/sql/fastest-way-to-insert-new-records-where-one-doesnt-already-exist)
