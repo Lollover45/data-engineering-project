@@ -160,7 +160,7 @@ The graph BQ2_bubblecharts depicts 10 counties with the fewest Varroa mites. The
 
 **3. Business question 6: Which county is most popular for beekeeping and which is most safe from pests?**
 
-In the table BQ6_chart it can be seen that Prince George's is the most popular county for beekeeping, as 57,000 bee occurrences were detected. However, it can be seen from the chart that it also has one of the highest overall pest scores of the counties with highest bee occurrences. This could indicate that pests are easily spread in areas with large numbers of bee colonies. In the BQ6_lineechart, it can be seen that slight rises in pest scores across counties can cause dips in the number of bees detected, and vice-versa.
+In the table BQ6_chart it can be seen that Prince George's is the most popular county for beekeeping, as 57,000 bee occurrences were detected. However, it can be seen from the chart that it also has one of the highest overall pest scores of the counties with highest bee occurrences. This could indicate that pests are easily spread in areas with large numbers of bee colonies. In the BQ6_lineechart, it can be seen that, in general, slight rises in pest scores across counties can cause dips in the number of bees detected, and vice-versa.
 
 #### 11.2 Connecting Superset with OpenMetadata
 Unfortunately, the latest version of Superset does not support stable connection to OpenMetadata, which is why the pipeline uses an older version. However, despite testing with various different versions of both Superset and OpenMetadata, the Superset dashboards did not appear in OpenMetadata. There were no connection issues nor any errors logs. 
