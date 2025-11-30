@@ -154,7 +154,7 @@ Scroll down for the visuals of Superset.
 
 According to the table BQ1_table, the three counties that had the highest average virus prevalence were Jefferson (60% of bees infected), Washington (59%) and Prince George (58%). From these counties, 63, 53 and 1596 bees were detected respectively.  The differences between bee occurrences are quite large, indicating that there may be other variables that affect the number of bees.
 
-**2. Business question 2:How many bee occurrences are there in the five counties with the fewest Varroa mites?**
+**2. Business question 2: How many bee occurrences are there in the five counties with the fewest Varroa mites?**
 
 The graph BQ2_bubblecharts depicts 10 counties with the fewest Varroa mites. The five counties with the fewest Varroa mites were: Swift, Madera, Carver, Jones and Maui. From these five, Maui had both the highest number of bee occurrences (~400) and the highest average number of Varroa occurrences (2.25).
 
