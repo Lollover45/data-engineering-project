@@ -72,14 +72,15 @@ PS! There might rise an issue that elastic search container won't stay running. 
 1. Create a role that can access database on OpenMetadata
 ```bash
    docker exec -it clickhouse-server-project clickhouse-client --multiquery --queries-file=/sql/omd_role.sql
-    # then inside of the the container
-    DROP ROLE IF EXISTS role_openmetadata; 
-    DROP USER IF EXISTS service_openmetadata; 
-    CREATE ROLE role_openmetadata;
-    CREATE USER service_openmetadata IDENTIFIED WITH sha256_password BY 'omd_very_secret_password';
-    GRANT role_openmetadata TO service_openmetadata;
-    GRANT SELECT, SHOW ON system.* to role_openmetadata;
-    GRANT SELECT ON messud.* TO role_openmetadata;
+
+   # then inside the clickhouse container :)
+   DROP ROLE IF EXISTS role_openmetadata;
+   DROP USER IF EXISTS service_openmetadata; 
+   CREATE ROLE role_openmetadata;
+   CREATE USER service_openmetadata IDENTIFIED WITH sha256_password BY 'omd_very_secret_password';
+   GRANT role_openmetadata TO service_openmetadata;
+   GRANT SELECT, SHOW ON system.* to role_openmetadata;
+   GRANT SELECT ON messud.* TO role_openmetadata;
    ```
 
 2. Go to http://localhost:8585 and log in. The username is admin@open-metadata.org and password is admin.
