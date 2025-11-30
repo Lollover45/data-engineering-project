@@ -3,4 +3,5 @@ logs/
 06_dbt/
 dbt_packages/
 processed/
+docker-volume/
 minio_data/
